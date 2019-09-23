@@ -1,0 +1,8 @@
+
+task quickStart {
+    println 'quickStart'
+}
+
+task customizeFirstVersion {
+    println 'customizeFirstVersion'
+}

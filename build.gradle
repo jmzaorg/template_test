@@ -62,6 +62,7 @@ configurations.all {
 }
 
 dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter'
     runtimeOnly 'com.h2database:h2'//TODO: remove if h2 not required //Mybatis line
     testImplementation('org.springframework.boot:spring-boot-starter-test')
     compileOnly 'org.projectlombok:lombok:1.18.8'

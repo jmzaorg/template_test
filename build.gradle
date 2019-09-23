@@ -5,7 +5,7 @@ buildscript {
          */
     }
     repositories {
-        maven { url "http://localhost:9081/artifactory/libs-release" }
+        maven { url "http://192.168.0.5:9081/artifactory/libs-release" }
     }
     dependencies {
         classpath "org.ajoberstar:gradle-imports:1.0.3"
@@ -29,14 +29,14 @@ apply plugin: "io.spring.dependency-management"
 //Apply the plugin to organize unused imports (the task organizeImports still needs to be passed in the command line)
 apply plugin: "org.ajoberstar.organize-imports"
 
-group 'com.accessofusion'
+group 'com.github.jmzaorg'
 version '1.0-SNAPSHOT'
 
 sourceCompatibility = 1.8
 
 repositories {
-    maven { url "http://localhost:9081/artifactory/libs-snapshot" }
-    maven { url "http://localhost:9081/artifactory/libs-release" }
+    maven { url "http://192.168.0.5:9081/artifactory/libs-snapshot" }
+    maven { url "http://192.168.0.5:9081/artifactory/libs-release" }
 }
 
 /**
@@ -77,19 +77,6 @@ springBoot {
     buildInfo()
 }
 
-/**
- * Task to execute integration tests easily from Gradle (See Readme)
- */
-task integrationTests(type: Test) {
-    testClassesDirs = files(sourceSets.integrationTest.output.classesDirs)
-    classpath = sourceSets.integrationTest.runtimeClasspath
-    exclude '**/TestContext.class'
-    testLogging {
-        outputs.upToDateWhen {false}
-        showStandardStreams = true
-    }
-    systemProperty 'use_container_for_tests', 'true'//Couchbase line
-}
 
 /**
  * System property required. The "test" used to generate the swagger.json file will use this folder.

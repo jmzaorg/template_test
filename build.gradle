@@ -1,0 +1,116 @@
+buildscript {
+    ext {
+        /**
+         * Add any relevant properties for gradle here.
+         */
+    }
+    repositories {
+        maven { url "http://localhost:9081/artifactory/libs-release" }
+    }
+    dependencies {
+        classpath "org.ajoberstar:gradle-imports:1.0.3"
+    }
+}
+
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '2.1.6.RELEASE'
+    /**
+     * Used to allow execution of nodejs tasks from Gradle
+     */
+    id "com.moowork.node" version "1.3.1"
+    /**
+     * Google java format
+     */
+    id 'com.github.sherter.google-java-format' version '0.8'
+}
+
+apply plugin: "io.spring.dependency-management"
+//Apply the plugin to organize unused imports (the task organizeImports still needs to be passed in the command line)
+apply plugin: "org.ajoberstar.organize-imports"
+
+group 'com.accessofusion'
+version '1.0-SNAPSHOT'
+
+sourceCompatibility = 1.8
+
+repositories {
+    maven { url "http://localhost:9081/artifactory/libs-snapshot" }
+    maven { url "http://localhost:9081/artifactory/libs-release" }
+}
+
+/**
+ * Declaring a dedicated source set for integration tests
+ */
+sourceSets {
+    integrationTest {
+        java {
+            compileClasspath += main.output + test.output
+            runtimeClasspath += main.output + test.output
+            srcDir file('src/integrationTest/java')
+        }
+        resources.srcDir file('src/integrationTest/resources')
+    }
+}
+
+/**
+ * The next block is intended to refresh dependencies when using snapshots.
+ * If this is not required you can comment it without problem.
+ */
+configurations.all {
+    resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
+}
+
+dependencies {
+    runtimeOnly 'com.h2database:h2'//TODO: remove if h2 not required //Mybatis line
+    testImplementation('org.springframework.boot:spring-boot-starter-test')
+    compileOnly 'org.projectlombok:lombok:1.18.8'
+    annotationProcessor 'org.projectlombok:lombok:1.18.8'
+    integrationTestImplementation(sourceSets.main.output)
+}
+
+/**
+ * Used to generate the build information that can be used to automatically add the service version to swagger docs.
+ */
+springBoot {
+    buildInfo()
+}
+
+/**
+ * Task to execute integration tests easily from Gradle (See Readme)
+ */
+task integrationTests(type: Test) {
+    testClassesDirs = files(sourceSets.integrationTest.output.classesDirs)
+    classpath = sourceSets.integrationTest.runtimeClasspath
+    exclude '**/TestContext.class'
+    testLogging {
+        outputs.upToDateWhen {false}
+        showStandardStreams = true
+    }
+    systemProperty 'use_container_for_tests', 'true'//Couchbase line
+}
+
+/**
+ * System property required. The "test" used to generate the swagger.json file will use this folder.
+ */
+test {
+    systemProperty 'staticjson.outputDir', file("${projectDir}/swagger")
+}
+
+/**
+ * Installs the API spec converter
+ */
+task installApiSpecConverter(type: NpmTask) {
+    args = ['install', 'api-spec-converter', '--save-dev']
+}
+
+/**
+ * Uses api-spec-converter to transform from swagger 2 to OAS 3 (Postman Friendly / AWS Gateway friendly)
+ * The task requires that swagger.json file is present on swagger folder
+ */
+task convertSwaggerToOas3(type: NodeTask) {
+    dependsOn installApiSpecConverter
+    script = file('swagger/convert_to_oas3.js')
+}
+
+apply from: 'quickstart.gradle'
